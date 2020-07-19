@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import './product.dart';
+import 'package:http/http.dart' as http;
 
 class Products with ChangeNotifier {
   List<Product> _items = [
@@ -56,16 +58,38 @@ class Products with ChangeNotifier {
     return _items.firstWhere((prod) => prod.id == id);
   }
 
-  void addProduct(Product product) {
-    final newProduct = Product(
-      id: DateTime.now().toString(),
-      description: product.description,
-      title: product.title,
-      price: product.price,
-      imageUrl: product.imageUrl,
-    );
-    _items.add(newProduct);
-    notifyListeners(); // notifies
+  Future<void> addProduct(Product product) async {
+    const url = 'https://apex-73a20.firebaseio.com/products.json';
+
+    try {
+      // exception handling with try-ctach instead of Futures catchError
+      final resp = await http.post(
+        url, // await block is async, result stored in resp
+        body: json.encode({
+          // post here is a future type
+          'title': product.title,
+          'description': product.description,
+          'imageUrl': product.imageUrl,
+          'price': product.price,
+          'isFavourtie': product.isFavourite,
+        }),
+      );
+
+      final newProduct = Product(
+        // use resp (awaits result), code below await block only runs after await is successful
+        id: json.decode(resp.body)['name'],
+        description: product.description,
+        title: product.title,
+        price: product.price,
+        imageUrl: product.imageUrl,
+      );
+
+      _items.add(newProduct);
+      notifyListeners(); // notifies
+    } catch (error) {
+      print(error); //Can add crash reporting library here
+      throw error;
+    }
   }
 
   void updateProduct(String id, Product newProduct) {
