@@ -24,19 +24,17 @@ class Product with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleFav() async {
+  Future<void> toggleFav(String token, String userId) async {
     final oldStatus = isFavourite;
     isFavourite = !isFavourite;
     notifyListeners();
     final url =
-        'https://apex-73a20.firebaseio.com/products/$id.json'; // using final and not const since the value is dynamic
+        'https://apex-73a20.firebaseio.com/userFavourites/$userId/$id.json?auth=$token'; // using final and not const since the value is dynamic
     try {
-      final resp = await http.patch(
+      final resp = await http.put(
         //patch put delete dont return error codes
         url,
-        body: json.encode({
-          'isFavourite': isFavourite,
-        }),
+        body: json.encode(isFavourite),
       );
       if (resp.statusCode >= 400) {
         _setFavValue(oldStatus);
